@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MCNET v18 - Super App</title>
+    <style>
+        /* --- THEME VARIABLES --- */
+        :root {
+            --primary: #4f46e5; 
+            --bg: #f8fafc; 
+            --card: #ffffff; 
+            --text: #1e293b; 
+            --subtext: #64748b;
+            --border: #e2e8f0;
+            --nav-bg: #ffffff;
+            --green: #10b981; 
+            --red: #ef4444;
+        }
+
+        /* DARK MODE COLORS */
+        body.dark-mode {
+            --bg: #0f172a; 
+            --card: #1e293b; 
+            --text: #f1f5f9; 
+            --subtext: #94a3b8;
+            --border: #334155;
+            --nav-bg: #1e293b;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 80px; transition: background 0.3s; }
+
+        /* HEADER */
+        .header {
+            background: var(--primary); padding: 15px 20px; color: white;
+            position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header h1 { margin: 0; font-size: 1.2em; font-weight: 700; letter-spacing: 1px; }
+        .badge-count { background: var(--red); color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.7em; margin-left: 5px; }
+
+        /* TABS CONTENT (SPA FEEL) */
+        .tab-content { display: none; padding: 15px; animation: fadeIn 0.2s; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* LIST PELANGGAN */
+        .search-box { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--card); color: var(--text); outline: none; margin-bottom: 15px; }
+        
+        .month-nav { display: flex; justify-content: space-between; align-items: center; background: var(--card); padding: 10px; border-radius: 10px; margin-bottom: 15px; border: 1px solid var(--border); }
+        .month-nav button { background: none; border: none; color: var(--text); font-size: 1.2em; cursor: pointer; }
+        
+        .cust-card {
+            background: var(--card); border-radius: 12px; padding: 15px; margin-bottom: 10px;
+            display: flex; justify-content: space-between; align-items: center;
+            border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+        .cust-card.urgent { border-left: 4px solid var(--red); } /* Telat Bayar */
+        .cust-card.today { border-left: 4px solid var(--primary); } /* Jatuh Tempo Hari Ini */
+        
+        .c-info h3 { margin: 0 0 5px 0; font-size: 1em; }
+        .c-info p { margin: 0; font-size: 0.8em; color: var(--subtext); }
+        .c-status { text-align: right; }
+        
+        .btn-check { background: var(--border); border: none; width: 35px; height: 35px; border-radius: 50%; color: var(--subtext); font-size: 1.2em; cursor: pointer; display: flex; justify-content: center; align-items: center; }
+        .btn-check.paid { background: var(--green); color: white; }
+
+        /* KEUANGAN TAB */
+        .stat-card { background: var(--card); padding: 20px; border-radius: 15px; text-align: center; border: 1px solid var(--border); margin-bottom: 15px; }
+        .stat-val { font-size: 1.8em; font-weight: 800; margin: 10px 0; display: block; }
+        .expense-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed var(--border); font-size: 0.9em; }
+
+        /* SETTINGS TAB */
+        .menu-list button {
+            width: 100%; padding: 15px; text-align: left; background: var(--card); border: none;
+            border-bottom: 1px solid var(--border); color: var(--text); font-size: 1em; cursor: pointer;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .menu-list button:first-child { border-top-left-radius: 10px; border-top-right-radius: 10px; }
+        .menu-list button:last-child { border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; border-bottom: none; }
+
+        /* BOTTOM NAVIGATION (THE GAME CHANGER) */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; width: 100%; height: 60px;
+            background: var(--nav-bg); border-top: 1px solid var(--border);
+            display: flex; justify-content: space-around; align-items: center;
+            z-index: 500; padding-bottom: constant(safe-area-inset-bottom); padding-bottom: env(safe-area-inset-bottom);
+        }
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: var(--subtext); font-size: 0.7em; background: none; border: none; width: 100%; height: 100%; cursor: pointer;
+        }
+        .nav-item.active { color: var(--primary); font-weight: bold; }
+        .nav-icon { font-size: 1.4em; margin-bottom: 3px; }
+
+        /* FAB (FLOATING BUTTON) */
+        .fab {
+            position: fixed; bottom: 75px; right: 20px;
+            background: var(--primary); color: white; width: 55px; height: 55px;
+            border-radius: 50%; display: flex; justify-content: center; align-items: center;
+            font-size: 1.8em; box-shadow: 0 4px 10px rgba(79, 70, 229, 0.4);
+            border: none; cursor: pointer; z-index: 400;
+        }
+
+        /* MODALS (Reusable) */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: flex-end; }
+        .modal-content { 
+            background: var(--card); width: 100%; max-width: 500px; padding: 25px; 
+            border-top-left-radius: 20px; border-top-right-radius: 20px; 
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.1); animation: slideUp 0.3s;
+        }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        
+        input, textarea, select { background: var(--bg); color: var(--text); border: 1px solid var(--border); width: 100%; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-size: 1em; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; margin-bottom: 10px; cursor: pointer; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-outline { background: transparent; border: 1px solid var(--subtext); color: var(--subtext); }
+        .btn-danger { background: var(--red); color: white; }
+
+        /* Utility */
+        .hidden { display: none; }
+        .text-sm { font-size: 0.8em; color: var(--subtext); }
+    </style>
+</head>
+<body>
+
+    <!-- 1. TAB HOME (PELANGGAN) -->
+    <div id="tab-home" class="tab-content active">
+        <div class="header" style="border-radius: 0 0 15px 15px; margin: -15px -15px 15px -15px;">
+            <h1>MCNET v18</h1>
+            <div id="dateDisplay" style="font-size:0.8em; opacity:0.8;"></div>
+        </div>
+
+        <div class="month-nav">
+            <button onclick="changeMonth(-1)">&#10094;</button>
+            <strong id="monthLabel">Desember 2025</strong>
+            <button onclick="changeMonth(1)">&#10095;</button>
+        </div>
+
+        <input type="text" id="search" class="search-box" placeholder="Cari nama..." onkeyup="renderHome()">
+        
+        <div id="customerList">
+            <!-- Data Pelanggan -->
+        </div>
+        <div style="height: 60px;"></div> <!-- Spacer -->
+    </div>
+
+    <!-- 2. TAB FINANCE (KEUANGAN) -->
+    <div id="tab-finance" class="tab-content">
+        <h2 style="margin-top:0;">Laporan Keuangan</h2>
+        <p class="text-sm" id="finMonthLabel">Desember 2025</p>
+
+        <div class="stat-card">
+            <span class="text-sm">Laba Bersih (Profit)</span>
+            <span class="stat-val" id="netProfit" style="color:var(--primary)">Rp 0</span>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+            <div class="stat-card" style="padding:15px; margin:0;">
+                <span class="text-sm">Pemasukan</span>
+                <span style="display:block; font-weight:bold; color:var(--green); margin-top:5px;" id="totalIn">Rp 0</span>
+            </div>
+            <div class="stat-card" style="padding:15px; margin:0;">
+                <span class="text-sm">Pengeluaran</span>
+                <span style="display:block; font-weight:bold; color:var(--red); margin-top:5px;" id="totalOut">Rp 0</span>
+            </div>
+        </div>
+
+        <h3 style="margin-top:20px;">Riwayat Pengeluaran</h3>
+        <button class="btn btn-outline" onclick="openExpenseModal()">+ Catat Pengeluaran</button>
+        <div id="expenseList" style="margin-top:10px;"></div>
+    </div>
+
+    <!-- 3. TAB SETTINGS (MENU DATA) -->
+    <div id="tab-settings" class="tab-content">
+        <h2 style="margin-top:0;">Pengaturan & Data</h2>
+        
+        <div class="menu-list">
+            <button onclick="toggleDarkMode()">
+                <span>🌙 Mode Gelap</span> <span id="dmText">OFF</span>
+            </button>
+            <button onclick="openWaSetting()">
+                <span>💬 Template WhatsApp</span> <span>&rsaquo;</span>
+            </button>
+        </div>
+
+        <h3 style="margin-top:20px;">Manajemen Data</h3>
+        <div class="menu-list">
+            <button onclick="document.getElementById('csvInput').click()">
+                <span>📥 Impor Excel (CSV)</span> <span>&rsaquo;</span>
+            </button>
+            <button onclick="copyReport()">
+                <span>📋 Salin Laporan Lunas</span> <span>&rsaquo;</span>
+            </button>
+            <button onclick="backupData()">
+                <span>☁️ Backup / Restore Data</span> <span>&rsaquo;</span>
+            </button>
+            <button onclick="openRecycleBin()" style="color:var(--red)">
+                <span>🗑️ Tong Sampah (Recycle Bin)</span> <span id="binCount">0</span>
+            </button>
+        </div>
+        
+        <div style="text-align:center; margin-top:30px; opacity:0.5; font-size:0.8em;">
+            MCNET v18 Ultimate<br>Client-side Only
+        </div>
+        <input type="file" id="csvInput" hidden accept=".csv" onchange="processCSV(this)">
+    </div>
+
+    <!-- FLOATING ACTION BUTTON (ADD) -->
+    <button class="fab" onclick="openAddModal()">+</button>
+
+    <!-- BOTTOM NAVIGATION -->
+    <nav class="bottom-nav">
+        <button class="nav-item active" onclick="switchTab('home')" id="nav-home">
+            <span class="nav-icon">👥</span> Pelanggan
+        </button>
+        <button class="nav-item" onclick="switchTab('finance')" id="nav-finance">
+            <span class="nav-icon">💰</span> Keuangan
+        </button>
+        <button class="nav-item" onclick="switchTab('settings')" id="nav-settings">
+            <span class="nav-icon">⚙️</span> Menu
+        </button>
+    </nav>
+
+    <!-- MODALS -->
+    
+    <!-- 1. ADD/EDIT CUSTOMER -->
+    <div id="modalCust" class="modal">
+        <div class="modal-content">
+            <h3>Data Pelanggan</h3>
+            <input type="hidden" id="cId">
+            <input type="text" id="cName" placeholder="Nama Pelanggan">
+            <input type="number" id="cPhone" placeholder="No HP (628...)" inputmode="numeric">
+            <input type="text" id="cBill" placeholder="Tagihan (Rp)" onkeyup="fmtRpInput(this)" inputmode="numeric">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+                <span style="flex:1;">Tgl Jatuh Tempo:</span>
+                <input type="number" id="cDate" placeholder="1-31" style="width:80px; margin:0;" min="1" max="31">
+            </div>
+            <button class="btn btn-primary" onclick="saveCustomer()">Simpan</button>
+            <div id="editActions" class="hidden">
+                <button class="btn btn-danger" onclick="moveToBin()">Hapus (Pindahkan ke Sampah)</button>
+            </div>
+            <button class="btn btn-outline" onclick="closeModal('modalCust')">Batal</button>
+        </div>
+    </div>
+
+    <!-- 2. EXPENSE -->
+    <div id="modalExp" class="modal">
+        <div class="modal-content">
+            <h3>Tambah Pengeluaran</h3>
+            <input type="text" id="eDesc" placeholder="Untuk keperluan apa?">
+            <input type="text" id="eAmount" placeholder="Jumlah (Rp)" onkeyup="fmtRpInput(this)" inputmode="numeric">
+            <button class="btn btn-primary" onclick="saveExpense()">Simpan</button>
+            <button class="btn btn-outline" onclick="closeModal('modalExp')">Batal</button>
+        </div>
+    </div>
+
+    <!-- 3. RECYCLE BIN -->
+    <div id="modalBin" class="modal">
+        <div class="modal-content" style="height: 80vh;">
+            <h3>Tong Sampah</h3>
+            <p class="text-sm">Data di sini belum hilang permanen.</p>
+            <div id="binList" style="height:60%; overflow-y:auto; margin-bottom:10px; border:1px solid var(--border); padding:10px; border-radius:8px;"></div>
+            <button class="btn btn-outline" onclick="closeModal('modalBin')">Tutup</button>
+        </div>
+    </div>
+
+    <!-- 4. BACKUP/RESTORE -->
+    <div id="modalBackup" class="modal">
+        <div class="modal-content">
+            <h3>Backup & Restore</h3>
+            <textarea id="ioText" style="height:100px; font-size:0.8em;" placeholder="Kode data..."></textarea>
+            <button class="btn btn-primary" onclick="doBackup()">Salin Kode Backup</button>
+            <button class="btn btn-outline" onclick="doRestore()">Restore dari Kode</button>
+            <button class="btn btn-outline" onclick="closeModal('modalBackup')">Tutup</button>
+        </div>
+    </div>
+
+<script>
+    /* --- CORE DATA & STATE --- */
+    let db = JSON.parse(localStorage.getItem('mcnetV18')) || { customers: [], expenses: {}, trash: [] };
+    let config = JSON.parse(localStorage.getItem('mcnetConfig')) || { dark: false, wa: "Halo {nama}, tagihan {bulan} sebesar {tagihan} jatuh tempo. Tks." };
+    
+    let viewDate = new Date();
+    const today = new Date();
+
+    /* --- INIT --- */
+    if(config.dark) document.body.classList.add('dark-mode');
+    document.getElementById('dmText').innerText = config.dark ? "ON" : "OFF";
+    renderHome();
+
+    /* --- NAVIGATION --- */
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        document.getElementById('tab-' + tabId).classList.add('active');
+        document.getElementById('nav-' + tabId).classList.add('active');
+        
+        // Hide FAB on settings/finance to keep UI clean
+        document.querySelector('.fab').style.display = (tabId === 'home') ? 'flex' : 'none';
+        
+        if(tabId === 'finance') renderFinance();
+        if(tabId === 'settings') updateBinCount();
+    }
+
+    function changeMonth(delta) {
+        viewDate.setMonth(viewDate.getMonth() + delta);
+        renderHome();
+        if(document.getElementById('tab-finance').classList.contains('active')) renderFinance();
+    }
+
+    /* --- HOME: RENDER LIST (SMART SORT) --- */
+    function renderHome() {
+        const list = document.getElementById('customerList');
+        list.innerHTML = '';
+        
+        // Key Generation
+        const k = getKeys();
+        document.getElementById('monthLabel').innerText = k.monthName;
+        document.getElementById('dateDisplay').innerText = today.toLocaleDateString('id-ID', {weekday:'long', day:'numeric', month:'long'});
+
+        const search = document.getElementById('search').value.toLowerCase();
+        
+        // Filter & Sort
+        let data = db.customers.filter(c => c.name.toLowerCase().includes(search));
+        
+        // SORTING MAGIC: 
+        // 1. Prioritas: Jatuh Tempo HARI INI (jika belum bayar)
+        // 2. Prioritas: Telat Bayar (jika belum bayar)
+        // 3. Tanggal Jatuh Tempo (Ascending)
+        
+        data.sort((a,b) => {
+            const paidA = isPaid(a, k.currKey);
+            const paidB = isPaid(b, k.currKey);
+            const isTodayA = (a.dueDay === today.getDate() && isSameMonth(viewDate, today) && !paidA);
+            const isTodayB = (b.dueDay === today.getDate() && isSameMonth(viewDate, today) && !paidB);
+            
+            if(isTodayA && !isTodayB) return -1;
+            if(!isTodayA && isTodayB) return 1;
+            return a.dueDay - b.dueDay;
+        });
+
+        if(data.length === 0) { list.innerHTML = `<div style="text-align:center; padding:40px; opacity:0.5;">Tidak ada data</div>`; return; }
+
+        data.forEach(c => {
+            const paid = isPaid(c, k.currKey);
+            const isToday = (c.dueDay === today.getDate() && isSameMonth(viewDate, today) && !paid);
+            const isOverdue = (!paid && c.dueDay < today.getDate() && isSameMonth(viewDate, today));
+            
+            // Card Class Logic
+            let cardClass = "cust-card";
+            let statusIcon = "⬜"; // Default box
+            if(paid) { statusIcon = "✅"; }
+            else if(isToday) { cardClass += " today"; statusIcon = "❗"; }
+            else if(isOverdue) { cardClass += " urgent"; statusIcon = "⚠️"; }
+
+            // Date Paid Info
+            let datePaidStr = "";
+            if(paid && typeof c.history[k.currKey] === 'object') datePaidStr = `<small style="color:var(--green)">Lunas: ${c.history[k.currKey].date}</small>`;
+
+            const html = `
+            <div class="${cardClass}">
+                <div class="c-info" onclick="editCust(${c.id})">
+                    <h3>${c.name} ${c.phone ? `<span onclick="wa('${c.phone}', '${c.name}', ${c.bill}, event)">💬</span>` : ''}</h3>
+                    <p>Tagihan: ${fmtRp(c.bill)} | Tgl: ${c.dueDay}</p>
+                    ${datePaidStr}
+                </div>
+                <button class="btn-check ${paid?'paid':''}" onclick="togglePay(${c.id})">
+                    ${paid ? '✓' : ''}
+                </button>
+            </div>
+            `;
+            list.innerHTML += html;
+        });
+    }
+
+    /* --- FINANCE --- */
+    function renderFinance() {
+        const k = getKeys();
+        document.getElementById('finMonthLabel').innerText = k.monthName;
+        
+        let income = 0;
+        db.customers.forEach(c => { if(isPaid(c, k.currKey)) income += c.bill; });
+        
+        let expenseList = db.expenses[k.currKey] || [];
+        let outcome = expenseList.reduce((sum, item) => sum + item.amount, 0);
+        
+        let profit = income - outcome;
+
+        document.getElementById('totalIn').innerText = fmtRp(income);
+        document.getElementById('totalOut').innerText = fmtRp(outcome);
+        document.getElementById('netProfit').innerText = fmtRp(profit);
+        
+        // Render Expense List
+        const elList = document.getElementById('expenseList');
+        elList.innerHTML = '';
+        if(expenseList.length === 0) elList.innerHTML = '<p style="text-align:center; opacity:0.5">Belum ada pengeluaran</p>';
+        
+        expenseList.forEach((ex, idx) => {
+            elList.innerHTML += `
+            <div class="expense-row">
+                <span>${ex.desc}</span>
+                <span>${fmtRp(ex.amount)} <b style="color:var(--red); margin-left:10px; cursor:pointer;" onclick="delExp(${idx})">×</b></span>
+            </div>`;
+        });
+    }
+
+    /* --- LOGIC: CUSTOMER --- */
+    function saveCustomer() {
+        const id = document.getElementById('cId').value;
+        const name = document.getElementById('cName').value;
+        const bill = parseRp(document.getElementById('cBill').value);
+        const date = parseInt(document.getElementById('cDate').value);
+        const phone = document.getElementById('cPhone').value;
+
+        if(!name || !bill || !date) return alert("Lengkapi data!");
+
+        if(id) {
+            const c = db.customers.find(x => x.id == id);
+            if(c) { c.name=name; c.bill=bill; c.dueDay=date; c.phone=phone; }
+        } else {
+            db.customers.push({ id: Date.now(), name, bill, dueDay:date, phone, history: {} });
+        }
+        save(); closeModal('modalCust');
+    }
+
+    function togglePay(id) {
+        const k = getKeys();
+        const c = db.customers.find(x => x.id == id);
+        if(c) {
+            if(isPaid(c, k.currKey)) c.history[k.currKey] = 0;
+            else {
+                const d = new Date();
+                c.history[k.currKey] = { status: 1, date: `${d.getDate()}/${d.getMonth()+1}` };
+            }
+            save();
+        }
+    }
+
+    function moveToBin() {
+        const id = document.getElementById('cId').value;
+        const idx = db.customers.findIndex(x => x.id == id);
+        if(idx > -1) {
+            if(confirm("Pindahkan ke tong sampah?")) {
+                const item = db.customers.splice(idx, 1)[0];
+                item.deletedDate = new Date().toLocaleDateString();
+                if(!db.trash) db.trash = [];
+                db.trash.push(item);
+                save(); closeModal('modalCust');
+            }
+        }
+    }
+
+    /* --- LOGIC: EXPENSE --- */
+    function saveExpense() {
+        const k = getKeys();
+        const desc = document.getElementById('eDesc').value;
+        const amount = parseRp(document.getElementById('eAmount').value);
+        if(!desc || !amount) return;
+        
+        if(!db.expenses[k.currKey]) db.expenses[k.currKey] = [];
+        db.expenses[k.currKey].push({ desc, amount });
+        save(); closeModal('modalExp'); renderFinance();
+    }
+    function delExp(idx) {
+        const k = getKeys();
+        if(confirm("Hapus?")) {
+            db.expenses[k.currKey].splice(idx, 1);
+            save(); renderFinance();
+        }
+    }
+
+    /* --- LOGIC: SETTINGS & TOOLS --- */
+    function toggleDarkMode() {
+        config.dark = !config.dark;
+        document.body.classList.toggle('dark-mode', config.dark);
+        document.getElementById('dmText').innerText = config.dark ? "ON" : "OFF";
+        localStorage.setItem('mcnetConfig', JSON.stringify(config));
+    }
+
+    function openRecycleBin() {
+        const list = document.getElementById('binList');
+        list.innerHTML = '';
+        const trash = db.trash || [];
+        if(trash.length === 0) list.innerHTML = "<p style='text-align:center'>Kosong</p>";
+        
+        trash.forEach((c, idx) => {
+            list.innerHTML += `
+            <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border); padding:10px;">
+                <span>${c.name} (${c.deletedDate})</span>
+                <button class="btn-primary" style="padding:2px 10px; width:auto;" onclick="restoreItem(${idx})">Pulihkan</button>
+            </div>`;
+        });
+        openModal('modalBin');
+    }
+
+    function restoreItem(idx) {
+        const item = db.trash.splice(idx, 1)[0];
+        delete item.deletedDate;
+        db.customers.push(item);
+        save(); openRecycleBin(); renderHome();
+    }
+
+    function copyReport() {
+        const k = getKeys();
+        let txt = `*LAPORAN LUNAS ${k.monthName}*\n`;
+        let total = 0;
+        db.customers.forEach(c => {
+            if(isPaid(c, k.currKey)) {
+                txt += `✅ ${c.name} (${fmtRp(c.bill)})\n`;
+                total += c.bill;
+            }
+        });
+        txt += `\n*TOTAL: ${fmtRp(total)}*`;
+        navigator.clipboard.writeText(txt).then(() => alert("Laporan disalin!"));
+    }
+
+    function backupData() {
+        const code = JSON.stringify(db);
+        document.getElementById('ioText').value = code;
+        openModal('modalBackup');
+    }
+    function doBackup() {
+        const code = document.getElementById('ioText').value;
+        navigator.clipboard.writeText(code).then(() => alert("Kode tersalin!"));
+    }
+    function doRestore() {
+        try {
+            const code = document.getElementById('ioText').value;
+            if(!code) return;
+            db = JSON.parse(code);
+            save(); alert("Berhasil Restore!"); location.reload();
+        } catch(e) { alert("Kode Salah!"); }
+    }
+
+    function processCSV(input) {
+        const file = input.files[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            // Simple CSV parser (Name, Bill, Date, Phone)
+            const lines = e.target.result.split('\n');
+            let count = 0;
+            lines.forEach(line => {
+                const cols = line.split(/,|;/);
+                if(cols.length >= 3) {
+                    const name = cols[0].replace(/"/g,'').trim();
+                    const bill = parseInt(cols[1].replace(/\D/g,''));
+                    const date = parseInt(cols[2]);
+                    if(name && bill && date) {
+                        db.customers.push({ id: Date.now()+Math.random(), name, bill, dueDay:date, phone:"", history:{} });
+                        count++;
+                    }
+                }
+            });
+            alert(count + " Data diimpor!"); save();
+        };
+        reader.readAsText(file);
+    }
+
+    /* --- HELPERS --- */
+    function save() { localStorage.setItem('mcnetV18', JSON.stringify(db)); renderHome(); updateBinCount(); }
+    function isPaid(c, key) { 
+        if(!c.history[key]) return false;
+        if(typeof c.history[key] === 'object') return c.history[key].status === 1;
+        return c.history[key] === 1;
+    }
+    function getKeys() {
+        const y = viewDate.getFullYear(); const m = viewDate.getMonth() + 1;
+        const currKey = `${y}-${String(m).padStart(2,'0')}`;
+        const monthName = viewDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+        return { currKey, monthName };
+    }
+    function isSameMonth(d1, d2) { return d1.getMonth() === d2.getMonth() && d1.getFullYear() === d2.getFullYear(); }
+    function fmtRp(n) { return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n); }
+    function fmtRpInput(el) { let v = el.value.replace(/\D/g, ''); el.value = v ? new Intl.NumberFormat('id-ID').format(v) : ""; }
+    function parseRp(v) { return parseInt(v.replace(/\./g, '') || 0); }
+    function wa(phone, name, bill, e) {
+        e.stopPropagation();
+        const k = getKeys();
+        let msg = config.wa.replace('{nama}', name).replace('{tagihan}', fmtRp(bill)).replace('{bulan}', k.monthName);
+        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+    }
+    
+    function openAddModal() { 
+        document.getElementById('cId').value = ''; 
+        document.getElementById('cName').value = ''; 
+        document.getElementById('cBill').value = ''; 
+        document.getElementById('cDate').value = ''; 
+        document.getElementById('cPhone').value = ''; 
+        document.getElementById('editActions').classList.add('hidden');
+        openModal('modalCust'); 
+    }
+    function editCust(id) {
+        const c = db.customers.find(x => x.id == id);
+        if(!c) return;
+        document.getElementById('cId').value = c.id; 
+        document.getElementById('cName').value = c.name; 
+        document.getElementById('cBill').value = new Intl.NumberFormat('id-ID').format(c.bill); 
+        document.getElementById('cDate').value = c.dueDay; 
+        document.getElementById('cPhone').value = c.phone || ""; 
+        document.getElementById('editActions').classList.remove('hidden');
+        openModal('modalCust');
+    }
+    
+    function updateBinCount() {
+        const c = db.trash ? db.trash.length : 0;
+        document.getElementById('binCount').innerText = c;
+    }
+    
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    function openExpenseModal() { openModal('modalExp'); }
+    function openWaSetting() { 
+        let newT = prompt("Template WA ({nama}, {tagihan}, {bulan}):", config.wa);
+        if(newT) { config.wa = newT; localStorage.setItem('mcnetConfig', JSON.stringify(config)); }
+    }
+</script>
+</body>
+</html>
